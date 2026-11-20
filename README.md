@@ -19,11 +19,14 @@ Open a new conversation and tell WorkBuddy:
 
 > Set up ModelGo for me
 
-It walks you through three steps:
+A settings page opens in your browser. Two steps there:
 
-1. **Save your key.** WorkBuddy gives you the path of a small setup tool; you double-click it and paste your key in the window that opens. Create a key in the [modelgo.ai](https://modelgo.ai) console; it starts with `mgk_`. **Do not paste the key into the conversation.**
-2. **Pick models.** Ask WorkBuddy to add the recommended set (8 commonly used models), or say which ones you want.
-3. **Restart WorkBuddy.** Quit it completely from the tray or menu bar, open it again, and switch models under the input box. ModelGo models are shown as `ModelGo · model-name`.
+1. **Paste your key** and click "Verify and save". Create a key in the [modelgo.ai](https://modelgo.ai) console; it starts with `mgk_`.
+2. **Tick models** and click "Save to WorkBuddy". The 8 recommended models are ticked already; you can search for others.
+
+Back in WorkBuddy, switch models under the input box. ModelGo models are shown as `ModelGo · model-name`. If they are not there, quit WorkBuddy completely from the tray or menu bar and open it again.
+
+The settings page runs only on your computer, and the key never passes through the conversation. To change the key or the models later, say "open ModelGo settings".
 
 After that you can say things like:
 
@@ -53,6 +56,7 @@ The key is only ever sent to `api.modelgo.ai`; that address is fixed in the plug
 ## Without a conversation
 
 ```sh
+node plugins/modelgo/scripts/cli.mjs ui                # open the settings page
 node plugins/modelgo/scripts/cli.mjs status --verify   # check the setup
 node plugins/modelgo/scripts/cli.mjs set-key           # type the key in a terminal
 node plugins/modelgo/scripts/cli.mjs models            # list available models
@@ -68,8 +72,9 @@ Needs Node 20 or newer. Without one installed, WorkBuddy's own works: `~/.workbu
 
 | Symptom | Cause and fix |
 |---|---|
-| No ModelGo models in the model picker | WorkBuddy was not fully quit. Quit it from the tray or menu bar and open it again; closing the window is not enough |
-| 401, or the key is reported as not valid | The key is mistyped or has been deleted. Open the setup tool again and save a new key; models already added are updated with it |
+| No ModelGo models in the model picker | Quit WorkBuddy completely from the tray or menu bar and open it again; closing the window is not enough |
+| The settings page says it has expired | The page closes itself after 15 minutes without use. Say "open ModelGo settings" to open it again |
+| 401, or the key is reported as not valid | The key is mistyped or has been deleted. Save a new key on the settings page; models already added are updated with it |
 | 404, or the model is not found | The key may no longer use that model. Tell WorkBuddy "sync my ModelGo models" |
 | 402, or the quota is used up | Check balance and limits in the [modelgo.ai](https://modelgo.ai) console |
 | WorkBuddy cannot read the local model configuration | `models.json` is no longer valid JSON. Restore the most recent `models.json.bak-…` backup next to it |

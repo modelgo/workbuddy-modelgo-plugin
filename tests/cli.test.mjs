@@ -25,7 +25,7 @@ test('status on a fresh machine says what to do next and shows no key', async ()
     assert.equal(status.ok, true);
     assert.deepEqual(status.key, { set: false });
     assert.deepEqual(status.added, []);
-    assert.match(status.next, /set-key/);
+    assert.match(status.next, /settings page/);
   } finally { rmSync(home, { recursive: true, force: true }); }
 });
 

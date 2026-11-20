@@ -19,11 +19,14 @@
 
 > 帮我配置 ModelGo
 
-它会带你走完三步：
+浏览器会打开一个设置页面，在页面上完成两步：
 
-1. **保存密钥。** WorkBuddy 会给出一个设置工具的路径，你双击打开，在弹出的窗口里粘贴密钥。密钥在 [modelgo.ai](https://modelgo.ai) 的控制台创建，以 `mgk_` 开头。**不要把密钥发到对话里。**
-2. **挑选模型。** 让 WorkBuddy 加入推荐的一组（8 个常用模型），或告诉它你想用哪些。
-3. **重启 WorkBuddy。** 从托盘或菜单栏彻底退出再打开，然后在输入框下方的模型选择里切换，ModelGo 的模型显示为 `ModelGo · 模型名`。
+1. **粘贴密钥**，点"验证并保存"。密钥在 [modelgo.ai](https://modelgo.ai) 的控制台创建，以 `mgk_` 开头。
+2. **勾选模型**，点"保存到 WorkBuddy"。推荐的 8 个模型已经勾好，也可以搜索其他模型。
+
+回到 WorkBuddy，在输入框下方的模型选择里切换，ModelGo 的模型显示为 `ModelGo · 模型名`。没有出现的话，从托盘或菜单栏彻底退出 WorkBuddy 再打开。
+
+设置页面只在你的电脑上运行，密钥不经过对话。以后想换密钥或换模型，说"打开 ModelGo 设置"即可。
 
 之后可以随时说：
 
@@ -53,6 +56,7 @@ WorkBuddy 的设计是把自定义模型的密钥保存在本机的 `models.json
 ## 不用对话，直接用命令
 
 ```sh
+node plugins/modelgo/scripts/cli.mjs ui                # 打开设置页面
 node plugins/modelgo/scripts/cli.mjs status --verify   # 检查状态
 node plugins/modelgo/scripts/cli.mjs set-key           # 在终端里输入密钥
 node plugins/modelgo/scripts/cli.mjs models            # 列出可用模型
@@ -68,8 +72,9 @@ node plugins/modelgo/scripts/cli.mjs remove --all      # 全部移除
 
 | 现象 | 原因和做法 |
 |---|---|
-| 模型选择里看不到 ModelGo 的模型 | 没有彻底退出。从托盘或菜单栏退出 WorkBuddy 再打开，只关窗口不生效 |
-| 提示 401 或密钥无效 | 密钥填错或已被删除。重新打开设置工具保存新密钥，已加入的模型会一并更新 |
+| 模型选择里看不到 ModelGo 的模型 | 从托盘或菜单栏彻底退出 WorkBuddy 再打开，只关窗口不生效 |
+| 设置页面提示已失效 | 页面 15 分钟不用会自动关闭。说"打开 ModelGo 设置"重新打开 |
+| 提示 401 或密钥无效 | 密钥填错或已被删除。在设置页面保存新密钥，已加入的模型会一并更新 |
 | 提示 404 或模型不存在 | 这把密钥不能再用这个模型。对 WorkBuddy 说"同步 ModelGo 的模型" |
 | 提示 402 或额度不足 | 到 [modelgo.ai](https://modelgo.ai) 的控制台查看余额和额度 |
 | WorkBuddy 提示读取本地模型配置失败 | `models.json` 格式被改坏。用同目录下最近一份 `models.json.bak-…` 备份恢复 |

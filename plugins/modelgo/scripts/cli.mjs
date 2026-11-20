@@ -2,6 +2,7 @@
 /**
  * ModelGo for WorkBuddy — command line.
  *
+ *   node cli.mjs ui                     open the settings page in the browser: key and models
  *   node cli.mjs status [--verify]      where things stand; --verify asks the site (free)
  *   node cli.mjs set-key                type the key at a hidden prompt, in a terminal
  *   node cli.mjs models [--search x]    chat models the key can use
@@ -12,18 +13,21 @@
  *   node cli.mjs clear-key              forget the saved key
  *
  * Every command prints one JSON object, so an agent can read the outcome; the
- * key itself is never printed, only a masked form. `set-key` is the one
- * interactive command: it reads the key from the terminal, never from an
- * argument, so the key does not end up in a chat transcript or shell history.
+ * key itself is never printed, only a masked form. The key is entered by the
+ * person, never passed as an argument: on the settings page (`ui`), or at a
+ * hidden terminal prompt (`set-key`), so it does not end up in a chat
+ * transcript or shell history.
  *
  * Nothing here sends a model request. Listing models is free.
  */
+import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { entryFor, pickRecommended, recommended } from '../lib/entries.mjs';
 import { CONSOLE_URL, listChatModels, looksLikeKey, mask, redact, verifyKey } from '../lib/site.mjs';
 import { clearKey, loadKey, modelsPath, ourModels, removeModels, saveKey, settingsPath, upsertModels } from '../lib/store.mjs';
 
 const RESTART = 'Quit WorkBuddy completely (from the tray or menu bar, not just the window) and open it again; then pick the model under the input box.';
-const NO_KEY = `No ModelGo key is saved. Run the "set-key" command in a terminal (create a key at ${CONSOLE_URL}).`;
+const NO_KEY = `No ModelGo key is saved. Open the settings page with the "ui" command and save one there (create a key at ${CONSOLE_URL}).`;
 
 const out = (value) => { process.stdout.write(`${JSON.stringify(value, null, 2)}\n`); };
 const fail = (message, extra = {}) => { out({ ok: false, error: message, ...extra }); process.exitCode = 1; };
@@ -57,7 +61,46 @@ function promptHidden(question) {
   });
 }
 
+/** Open an address in the default browser. */
+function openInBrowser(url) {
+  const [cmd, args] = process.platform === 'darwin' ? ['open', [url]]
+    : process.platform === 'win32' ? ['cmd', ['/c', 'start', '', url]]
+      : ['xdg-open', [url]];
+  return new Promise((resolve) => {
+    const child = spawn(cmd, args, { stdio: 'ignore', detached: true, windowsHide: true });
+    child.once('error', () => resolve(false));
+    child.once('spawn', () => { child.unref(); resolve(true); });
+  });
+}
+
 const commands = {
+  /**
+   * Start the settings page and return at once: the page is served by a
+   * separate process that stops by itself when it has been idle.
+   */
+  async ui(args) {
+    const child = spawn(process.execPath, [fileURLToPath(import.meta.url), 'ui-serve'], { stdio: ['ignore', 'pipe', 'ignore'], detached: true, windowsHide: true });
+    const url = await new Promise((resolve, reject) => {
+      let text = '';
+      child.stdout.on('data', (chunk) => { text += chunk; if (text.includes('\n')) resolve(text.trim()); });
+      child.once('error', reject);
+      child.once('exit', () => reject(new Error('the settings page could not be started')));
+    });
+    child.stdout.destroy();
+    child.unref();
+    const opened = args.includes('--no-open') ? false : await openInBrowser(url);
+    out({ ok: true, url, opened, note: opened
+      ? 'The settings page is open in the browser. The person saves the key and ticks models there; it closes itself after 15 minutes without use.'
+      : 'Give the person this address to open in a browser on this computer. It works for 15 minutes without use.' });
+  },
+
+  /** The process behind `ui`. Prints the page address, then serves until idle. */
+  async 'ui-serve'() {
+    const { startUi } = await import('../lib/ui-server.mjs');
+    const { url } = await startUi({ onClose: () => process.exit(0) });
+    process.stdout.write(`${url}\n`);
+  },
+
   async status(args) {
     const { key, source } = loadKey();
     let models = [];

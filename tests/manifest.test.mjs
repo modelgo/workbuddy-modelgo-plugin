@@ -22,7 +22,7 @@ test('one version everywhere', () => {
 test('the skill and everything it points at are in the plugin', () => {
   const skill = read('plugins/modelgo/skills/modelgo/SKILL.md');
   assert.match(skill, /^---\nname: modelgo\n/);
-  for (const file of ['plugins/modelgo/scripts/cli.mjs', 'plugins/modelgo/extras/设置密钥.command', 'plugins/modelgo/extras/设置密钥.bat', 'plugins/modelgo/data/model-profiles.json']) {
+  for (const file of ['plugins/modelgo/scripts/cli.mjs', 'plugins/modelgo/extras/打开设置.command', 'plugins/modelgo/extras/打开设置.bat', 'plugins/modelgo/ui/index.html', 'plugins/modelgo/ui/app.js', 'plugins/modelgo/data/model-profiles.json']) {
     assert.ok(existsSync(new URL(`../${file}`, import.meta.url)), file);
   }
 });
