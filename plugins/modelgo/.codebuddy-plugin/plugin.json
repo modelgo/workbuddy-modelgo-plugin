@@ -1,0 +1,17 @@
+{
+  "name": "modelgo",
+  "version": "0.1.0",
+  "description": "把 ModelGo 的模型加入 WorkBuddy 的模型列表：保存密钥，挑选模型，一句话完成配置。",
+  "description_zh": "把 ModelGo 的模型加入 WorkBuddy 的模型列表。",
+  "description_en": "Adds ModelGo models to the WorkBuddy model list.",
+  "author": {
+    "name": "ModelGo",
+    "url": "https://modelgo.ai"
+  },
+  "homepage": "https://github.com/modelgo/workbuddy-modelgo-plugin#readme",
+  "repository": "https://github.com/modelgo/workbuddy-modelgo-plugin",
+  "license": "MIT",
+  "keywords": ["modelgo", "models", "模型", "模型配置"],
+  "category": "productivity",
+  "skills": "./skills"
+}

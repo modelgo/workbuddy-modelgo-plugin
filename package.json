@@ -1,0 +1,18 @@
+{
+  "name": "workbuddy-modelgo-plugin",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ModelGo plugin for WorkBuddy: adds ModelGo models to the WorkBuddy model list.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/modelgo/workbuddy-modelgo-plugin.git"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "modelgo",
+  "description": "ModelGo 官方 WorkBuddy 插件",
+  "owner": {
+    "name": "ModelGo",
+    "url": "https://modelgo.ai"
+  },
+  "plugins": [
+    {
+      "name": "modelgo",
+      "source": "./plugins/modelgo",
+      "description": "把 ModelGo 的模型加入 WorkBuddy 的模型列表。",
+      "version": "0.1.0",
+      "author": { "name": "ModelGo" },
+      "homepage": "https://github.com/modelgo/workbuddy-modelgo-plugin#readme",
+      "repository": "https://github.com/modelgo/workbuddy-modelgo-plugin",
+      "license": "MIT",
+      "keywords": ["modelgo", "models", "模型", "模型配置"],
+      "category": "productivity"
+    }
+  ]
+}
