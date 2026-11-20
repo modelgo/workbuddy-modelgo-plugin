@@ -38,6 +38,25 @@ export function probed() {
   return probedEfforts;
 }
 
+let shortlist;
+/** The models suggested to someone who has not chosen yet, in the order shown. */
+export function recommended() {
+  shortlist ??= JSON.parse(readFileSync(new URL('../data/recommended.json', import.meta.url), 'utf8')).models ?? [];
+  return shortlist;
+}
+
+/**
+ * The recommended models this key can use, in the recommended order, and the
+ * ones it cannot.
+ */
+export function pickRecommended(models, list = recommended()) {
+  const byId = new Map(models.map((m) => [m.id, m]));
+  return { chosen: list.filter((id) => byId.has(id)).map((id) => byId.get(id)), unavailable: list.filter((id) => !byId.has(id)) };
+}
+
+/** The name shown in WorkBuddy's picker: prefixed, so it cannot be mistaken for the same model set up another way. */
+export const displayName = (id) => `${VENDOR} · ${id}`;
+
 /** An entry this plugin wrote: it points at the ModelGo chat endpoint. Anything else is never touched. */
 export const isOurs = (entry) => typeof entry?.url === 'string' && entry.url === CHAT_URL;
 
@@ -72,7 +91,7 @@ export function entryFor(model, key, data = profiles(), accepted = probed()) {
   const reasoning = reasoningFor(profile, accepted[model.id]);
   return {
     id: model.id,
-    name: model.id,
+    name: displayName(model.id),
     vendor: VENDOR,
     url: CHAT_URL,
     apiKey: key,

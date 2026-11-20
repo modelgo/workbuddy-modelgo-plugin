@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { entryFor, isOurs, profiles, reasoningFor } from '../plugins/modelgo/lib/entries.mjs';
+import { entryFor, isOurs, pickRecommended, probed, profiles, reasoningFor, recommended } from '../plugins/modelgo/lib/entries.mjs';
 import { CHAT_URL } from '../plugins/modelgo/lib/site.mjs';
 
 test('an entry carries the fields WorkBuddy documents, with limits from the site', () => {
@@ -8,6 +8,9 @@ test('an entry carries the fields WorkBuddy documents, with limits from the site
   assert.deepEqual(Object.keys(entry), ['id', 'name', 'vendor', 'url', 'apiKey', 'maxInputTokens', 'maxOutputTokens', 'supportsToolCall', 'supportsImages', 'supportsReasoning', 'reasoning']);
   assert.equal(entry.url, 'https://api.modelgo.ai/v1/chat/completions');
   assert.equal(entry.vendor, 'ModelGo');
+  // The id is what is sent to the site; the name is only what the picker shows.
+  assert.equal(entry.id, 'gpt-5.6-luna');
+  assert.equal(entry.name, 'ModelGo · gpt-5.6-luna');
   assert.equal(entry.maxInputTokens, 1050000);
   assert.equal(entry.supportsImages, true);
   assert.equal(entry.supportsToolCall, true);
@@ -70,4 +73,17 @@ test('a level the site refused when probed is not offered, whatever the profile 
   assert.deepEqual(reasoningFor({ reasoning: true }, { efforts: ['low', 'medium', 'high', 'xhigh', 'max'], canDisableThinking: true }).supportedEfforts, ['low', 'medium', 'high']);
   // Shipped data: glm-5.3-flash refuses medium on this wire.
   assert.deepEqual(entryFor({ id: 'glm-5.3-flash' }, 'k').reasoning.supportedEfforts, ['low', 'high']);
+});
+
+test('the recommended set is short, and every model in it is one the site offered when probed', () => {
+  const list = recommended();
+  assert.ok(list.length >= 4 && list.length <= 10);
+  assert.equal(new Set(list).size, list.length);
+  for (const id of list) assert.ok(probed()[id], id);
+});
+
+test('recommended models a key cannot use are reported, not added', () => {
+  const { chosen, unavailable } = pickRecommended([{ id: 'b' }, { id: 'a' }, { id: 'other' }], ['a', 'b', 'c']);
+  assert.deepEqual(chosen.map((m) => m.id), ['a', 'b']);
+  assert.deepEqual(unavailable, ['c']);
 });

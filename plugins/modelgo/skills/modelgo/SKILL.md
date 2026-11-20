@@ -28,8 +28,9 @@ node <插件目录>/scripts/cli.mjs <命令>
 | 第一次用 / 帮我配置 ModelGo | 先 `status`，再按下面的"首次配置" |
 | ModelGo 配好了吗 / 密钥还有效吗 | `status --verify` |
 | ModelGo 有哪些模型 | `models`，可加 `--search 关键词` |
+| 帮我加几个常用的 / 你推荐吧 | `add --recommended`（一组精选模型） |
 | 把某些模型加进来 | `add <模型id> ...` |
-| 全部加进来 | `add --all`，先告诉用户数量并得到确认 |
+| 全部加进来 | `add --all`。模型有几十个，会让模型选择很长：先告诉用户数量，建议改用推荐的那一组，用户坚持再执行 |
 | 换了密钥，或模型信息想刷新 | `sync` |
 | 移除某些 / 全部 ModelGo 模型 | `remove <模型id> ...` 或 `remove --all` |
 
@@ -51,11 +52,22 @@ node <插件目录>/scripts/cli.mjs <命令>
 
    工具会在一个终端窗口里请用户粘贴密钥（输入时不显示），向 ModelGo 验证通过后保存在本机。密钥在 https://modelgo.ai 的控制台创建，以 `mgk_` 开头。
 3. 用户说保存好了之后，运行 `status --verify` 确认。
-4. 运行 `models` 列出可用模型。模型可能有几十个，不要全部念出来：按用户的需求挑几个推荐，或问用户想用哪一类。输出里的 `images` 表示能否读图，`reasoning` 是可选的思考档位。
-5. 用户选定后运行 `add <模型id> ...`，然后按"必须遵守"第 4 条提醒重启。
+4. 运行 `models` 列出可用模型。模型可能有几十个，不要全部念出来：先把 `recommended` 为 `true` 的那几个告诉用户，问他是直接加这一组，还是另有想用的。输出里的 `images` 表示能否读图，`reasoning` 是可选的思考档位。
+5. 用户同意加推荐的一组就运行 `add --recommended`，点名了模型就运行 `add <模型id> ...`，然后按"必须遵守"第 4 条提醒重启。加入后模型在 WorkBuddy 里显示为 `ModelGo · <模型id>`。
 
 ## 输出里的字段
 
 - `status`：`key.set`、`key.masked`（脱敏后的密钥，可以展示）、`added`（已加入的模型 id）、`next`（下一步建议）。
-- `models`：每个模型的 `id`、`added`、`contextWindow`、`images`、`reasoning`。`notUsableHere` 是 ModelGo 有但不能在 WorkBuddy 里用的模型（它们不走 WorkBuddy 使用的接口）。
-- `add` / `sync` / `remove`：`added`、`updated`、`removed`、`backup`、`restart`。
+- `models`：每个模型的 `id`、`added`、`recommended`、`contextWindow`、`images`、`reasoning`。`notUsableHere` 是 ModelGo 有但不能在 WorkBuddy 里用的模型（它们不走 WorkBuddy 使用的接口）。
+- `add` / `sync` / `remove`：`added`、`updated`、`removed`、`backup`、`restart`。`recommendedButUnavailable` 是推荐组里这把密钥用不了的模型，照实告诉用户。
+
+## 用户说不好用时
+
+| 现象 | 原因和做法 |
+|---|---|
+| 模型选择里看不到 ModelGo 的模型 | 多半是没有彻底退出。让用户从托盘或菜单栏退出 WorkBuddy 再打开；再用 `status` 确认 `added` 不为空 |
+| 提示 401 或密钥无效 | 运行 `status --verify`。密钥失效就让用户重新打开设置工具保存新密钥，工具会把已加入的模型一并更新 |
+| 提示 404 或模型不存在 | 这把密钥已经不能用这个模型。运行 `sync`，输出的 `noLongerOffered` 就是这些模型，征得同意后 `remove` |
+| 提示 402 或额度不足 | 账户余额或额度用完，请用户到 https://modelgo.ai 的控制台查看 |
+| WorkBuddy 提示读取本地模型配置失败 | `models.json` 被手工改坏了。`status` 的 `modelsError` 会说明；每次写入前的备份在同目录下，文件名以 `models.json.bak-` 开头，告诉用户可以用最近一份恢复，不要自行覆盖 |
+| 某个思考档位报错 | 运行 `sync` 刷新档位；仍然报错就如实告诉用户换一个档位，并建议反馈给 ModelGo |

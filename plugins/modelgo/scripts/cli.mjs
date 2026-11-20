@@ -5,7 +5,8 @@
  *   node cli.mjs status [--verify]      where things stand; --verify asks the site (free)
  *   node cli.mjs set-key                type the key at a hidden prompt, in a terminal
  *   node cli.mjs models [--search x]    chat models the key can use
- *   node cli.mjs add <id>... | --all    put models into WorkBuddy's model list
+ *   node cli.mjs add <id>...            put models into WorkBuddy's model list;
+ *                --recommended | --all  the short recommended set, or everything
  *   node cli.mjs sync                   refresh the models already added (key, limits, levels)
  *   node cli.mjs remove <id>... | --all take ModelGo models out again
  *   node cli.mjs clear-key              forget the saved key
@@ -17,7 +18,7 @@
  *
  * Nothing here sends a model request. Listing models is free.
  */
-import { entryFor } from '../lib/entries.mjs';
+import { entryFor, pickRecommended, recommended } from '../lib/entries.mjs';
 import { CONSOLE_URL, listChatModels, looksLikeKey, mask, redact, verifyKey } from '../lib/site.mjs';
 import { clearKey, loadKey, modelsPath, ourModels, removeModels, saveKey, settingsPath, upsertModels } from '../lib/store.mjs';
 
@@ -101,9 +102,10 @@ const commands = {
     const needle = i >= 0 ? String(args[i + 1] ?? '').toLowerCase() : '';
     const { models, notOnChat, unknown } = await listChatModels(key);
     const added = new Set(ourModels().map((m) => m.id));
+    const suggested = new Set(recommended());
     const rows = models.filter((m) => !needle || m.id.toLowerCase().includes(needle)).map((m) => {
       const e = entryFor(m, '');
-      return { id: m.id, added: added.has(m.id), contextWindow: e.maxInputTokens, images: e.supportsImages, reasoning: e.reasoning?.supportedEfforts ?? [] };
+      return { id: m.id, added: added.has(m.id), recommended: suggested.has(m.id), contextWindow: e.maxInputTokens, images: e.supportsImages, reasoning: e.reasoning?.supportedEfforts ?? [] };
     });
     out({ ok: true, count: rows.length, models: rows, ...(notOnChat.length ? { notUsableHere: notOnChat } : {}), ...(unknown.length ? { protocolsUnknown: unknown } : {}) });
   },
@@ -112,14 +114,18 @@ const commands = {
     const key = requireKey();
     const ids = args.filter((a) => !a.startsWith('--'));
     const all = args.includes('--all');
-    if (!all && !ids.length) throw new Error('Name the models to add (ids from the "models" command), or pass --all.');
+    const shortlist = args.includes('--recommended');
+    if (!all && !shortlist && !ids.length) throw new Error('Name the models to add (ids from the "models" command), or pass --recommended for the short recommended set, or --all.');
     const { models } = await listChatModels(key);
     const byId = new Map(models.map((m) => [m.id, m]));
     const missing = ids.filter((id) => !byId.has(id));
     if (missing.length) throw new Error(`Not available to this key as chat models: ${missing.join(', ')}. Nothing was written.`);
-    const chosen = all ? models : ids.map((id) => byId.get(id));
+    const picked = shortlist ? pickRecommended(models) : { chosen: [], unavailable: [] };
+    const named = ids.map((id) => byId.get(id));
+    const chosen = all ? models : [...picked.chosen, ...named.filter((m) => !picked.chosen.includes(m))];
+    if (!chosen.length) throw new Error('None of the recommended models is available to this key. Nothing was written; use the "models" command to see what is.');
     const result = upsertModels(chosen.map((m) => entryFor(m, key)));
-    out({ ok: true, ...result, restart: RESTART });
+    out({ ok: true, ...result, ...(picked.unavailable.length ? { recommendedButUnavailable: picked.unavailable } : {}), restart: RESTART });
   },
 
   async sync() {
